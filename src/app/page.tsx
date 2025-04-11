@@ -1,3 +1,117 @@
-export default function Home() {
-  return <></>;
+'use client';
+
+import {IdentifyFoodOutput, identifyFood} from '@/ai/flows/identify-food';
+import {Button} from '@/components/ui/button';
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card';
+import {Input} from '@/components/ui/input';
+import {toast} from '@/hooks/use-toast';
+import {CameraIcon, UploadIcon} from 'lucide-react';
+import Image from 'next/image';
+import {useState} from 'react';
+import {useFormState} from 'react-dom';
+import {generateCookingInstructions} from '@/ai/flows/generate-cooking-instructions';
+
+async function handleIdentifyFood(prevState: any, formData: FormData) {
+  try {
+    const photoUrl = formData.get('photoUrl') as string;
+    if (!photoUrl) {
+      toast({
+        title: 'Error',
+        description: 'Please upload a photo of the food.',
+      });
+      return {message: 'Please upload a photo of the food.'};
+    }
+
+    const result = await identifyFood({photoUrl});
+    return result;
+  } catch (e: any) {
+    toast({
+      title: 'Error',
+      description: e.message,
+    });
+    return {message: e.message};
+  }
 }
+
+export default function Home() {
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [state, formAction] = useFormState(handleIdentifyFood, null);
+  const [cookingInfo, setCookingInfo] = useState<IdentifyFoodOutput | null>(null);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImageUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen py-2">
+      <Card className="w-full max-w-md space-y-4 p-4">
+        <CardHeader>
+          <CardTitle className="text-2xl">Air Fryer Temp</CardTitle>
+          <CardDescription>Upload a photo to get cooking instructions</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-col items-center space-y-2">
+            {imageUrl ? (
+              <Image src={imageUrl} alt="Uploaded Food" width={200} height={200} className="rounded-md shadow-md" />
+            ) : (
+              <div className="border-2 border-dashed rounded-md p-4 w-full flex flex-col items-center justify-center">
+                <UploadIcon className="h-6 w-6 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">Upload an image or take a photo</p>
+              </div>
+            )}
+            <form action={formAction}>
+              <Input
+                type="file"
+                id="photoUrl"
+                name="photoUrl"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+              />
+              <label htmlFor="photoUrl">
+                <Button asChild variant="secondary">
+                  <span className="flex items-center">
+                    <UploadIcon className="h-4 w-4 mr-2" />
+                    {imageUrl ? 'Change Image' : 'Upload Image'}
+                  </span>
+                </Button>
+              </label>
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={!imageUrl}
+                onClick={() => {
+                  if (!imageUrl) {
+                    toast({
+                      title: 'Info',
+                      description: 'Please upload a photo of the food.',
+                    });
+                  }
+                }}>
+                Get Cooking Instructions
+              </Button>
+            </form>
+          </div>
+
+          {state && state.foodName && (
+            <div className="mt-6">
+              <h2 className="text-lg font-semibold">Cooking Instructions</h2>
+              <p>Food Name: {state.foodName}</p>
+              <p>Cooking Time: {state.cookingTime}</p>
+              <p>Temperature: {state.cookingTemperatureCelsius} °C</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+

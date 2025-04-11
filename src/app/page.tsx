@@ -13,16 +13,16 @@ import {generateCookingInstructions} from '@/ai/flows/generate-cooking-instructi
 import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
 
 async function handleIdentifyFood(prevState: any, formData: FormData) {
-  try {
-    const photoUrl = formData.get('photoUrl') as string;
-    if (!photoUrl) {
-      toast({
-        title: 'Error',
-        description: 'Please upload a photo of the food.',
-      });
-      return {message: 'Please upload a photo of the food.'};
-    }
+  const photoUrl = formData.get('photoUrl') as string;
+  if (!photoUrl) {
+    toast({
+      title: 'Error',
+      description: 'Please upload a photo of the food.',
+    });
+    return {message: 'Please upload a photo of the food.'};
+  }
 
+  try {
     const result = await identifyFood({photoUrl});
     return result;
   } catch (e: any) {
@@ -41,6 +41,13 @@ export default function Home() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [hasCameraPermission, setHasCameraPermission] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    if (state && state.foodName) {
+      setCookingInfo(state);
+    }
+  }, [state]);
+
 
   useEffect(() => {
     const getCameraPermission = async () => {
@@ -161,12 +168,12 @@ export default function Home() {
             </form>
           </div>
 
-          {state && state.foodName && (
+          {cookingInfo && cookingInfo.foodName && (
             <div className="mt-6">
               <h2 className="text-lg font-semibold">Cooking Instructions</h2>
-              <p>Food Name: {state.foodName}</p>
-              <p>Cooking Time: {state.cookingTime}</p>
-              <p>Temperature: {state.cookingTemperatureCelsius} °C</p>
+              <p>Food Name: {cookingInfo.foodName}</p>
+              <p>Cooking Time: {cookingInfo.cookingTime}</p>
+              <p>Temperature: {cookingInfo.cookingTemperatureCelsius} °C</p>
             </div>
           )}
         </CardContent>

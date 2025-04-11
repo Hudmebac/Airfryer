@@ -8,7 +8,7 @@ import {toast} from '@/hooks/use-toast';
 import {CameraIcon, UploadIcon} from 'lucide-react';
 import Image from 'next/image';
 import {useState} from 'react';
-import {useFormState} from 'react-dom';
+import {useActionState} from 'react';
 import {generateCookingInstructions} from '@/ai/flows/generate-cooking-instructions';
 
 async function handleIdentifyFood(prevState: any, formData: FormData) {
@@ -35,7 +35,7 @@ async function handleIdentifyFood(prevState: any, formData: FormData) {
 
 export default function Home() {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [state, formAction] = useFormState(handleIdentifyFood, null);
+  const [state, formAction] = useActionState(handleIdentifyFood, null);
   const [cookingInfo, setCookingInfo] = useState<IdentifyFoodOutput | null>(null);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -114,4 +114,3 @@ export default function Home() {
     </div>
   );
 }
-

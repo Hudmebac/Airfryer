@@ -7,9 +7,10 @@ import {Input} from '@/components/ui/input';
 import {toast} from '@/hooks/use-toast';
 import {CameraIcon, UploadIcon} from 'lucide-react';
 import Image from 'next/image';
-import {useState} from 'react';
+import {useRef, useState, useEffect} from 'react';
 import {useActionState} from 'react';
 import {generateCookingInstructions} from '@/ai/flows/generate-cooking-instructions';
+import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
 
 async function handleIdentifyFood(prevState: any, formData: FormData) {
   try {
@@ -37,6 +38,32 @@ export default function Home() {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [state, formAction] = useActionState(handleIdentifyFood, null);
   const [cookingInfo, setCookingInfo] = useState<IdentifyFoodOutput | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [hasCameraPermission, setHasCameraPermission] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const getCameraPermission = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({video: true});
+        setHasCameraPermission(true);
+
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+      } catch (error) {
+        console.error('Error accessing camera:', error);
+        setHasCameraPermission(false);
+        toast({
+          variant: 'destructive',
+          title: 'Camera Access Denied',
+          description: 'Please enable camera permissions in your browser settings to use this app.',
+        });
+      }
+    };
+
+    getCameraPermission();
+  }, []);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -47,6 +74,22 @@ export default function Home() {
         setImageUrl(reader.result as string);
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const takeSnapshot = () => {
+    if (videoRef.current && canvasRef.current) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      const context = canvas.getContext('2d');
+
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+
+      context?.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
+
+      const dataUrl = canvas.toDataURL('image/png');
+      setImageUrl(dataUrl);
     }
   };
 
@@ -62,10 +105,20 @@ export default function Home() {
             {imageUrl ? (
               <Image src={imageUrl} alt="Uploaded Food" width={200} height={200} className="rounded-md shadow-md" />
             ) : (
-              <div className="border-2 border-dashed rounded-md p-4 w-full flex flex-col items-center justify-center">
-                <UploadIcon className="h-6 w-6 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground">Upload an image or take a photo</p>
-              </div>
+              <>
+                <video ref={videoRef} className="w-full aspect-video rounded-md" autoPlay muted />
+                <canvas ref={canvasRef} className="hidden" />
+                { !(hasCameraPermission) && (
+                    <Alert variant="destructive">
+                      <AlertTitle>Camera Access Required</AlertTitle>
+                      <AlertDescription>
+                        Please allow camera access to use this feature.
+                      </AlertDescription>
+                    </Alert>
+                )
+                }
+
+              </>
             )}
             <form action={formAction}>
               <Input
@@ -84,6 +137,13 @@ export default function Home() {
                   </span>
                 </Button>
               </label>
+
+              {hasCameraPermission && !imageUrl && (
+                  <Button type="button" variant="secondary" onClick={takeSnapshot}>
+                    <CameraIcon className="h-4 w-4 mr-2" />
+                    Take Photo
+                  </Button>
+              )}
               <Button
                 type="submit"
                 className="w-full"

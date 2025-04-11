@@ -9,7 +9,6 @@ import {CameraIcon, UploadIcon} from 'lucide-react';
 import Image from 'next/image';
 import {useRef, useState, useEffect, useCallback} from 'react';
 import {useActionState} from 'react';
-import {generateCookingInstructions} from '@/ai/flows/generate-cooking-instructions';
 import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
 
 async function handleIdentifyFood(prevState: any, formData: FormData) {
@@ -172,7 +171,7 @@ export default function Home() {
               )}
               <Button
                 type="submit"
-                className="w-full"
+                className=""
                 disabled={!imageUrl}
               >
                 Get Cooking Instructions
@@ -193,4 +192,3 @@ export default function Home() {
     </div>
   );
 }
-

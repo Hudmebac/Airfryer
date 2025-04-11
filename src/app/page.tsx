@@ -1,3 +1,4 @@
+
 'use client';
 
 import {IdentifyFoodOutput, identifyFood} from '@/ai/flows/identify-food';
@@ -119,74 +120,85 @@ export default function Home() {
   }, [imageUrl, formAction]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen py-2">
-      <Card className="w-full max-w-md space-y-4 p-4">
+    <div className="flex flex-col items-center justify-center min-h-screen py-2 bg-background">
+      <Card className="w-full max-w-3xl space-y-4 p-4 rounded-lg shadow-md">
         <CardHeader>
-          <CardTitle className="text-2xl">Air Fryer Temp</CardTitle>
-          <CardDescription>Upload a photo to get cooking instructions</CardDescription>
+          <CardTitle className="text-2xl font-semibold text-foreground">Air Fryer Temp</CardTitle>
+          <CardDescription className="text-muted-foreground">Upload a photo to get cooking instructions</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex flex-col items-center space-y-2">
-            {imageUrl ? (
-              <Image src={imageUrl} alt="Uploaded Food" width={200} height={200} className="rounded-md shadow-md" />
-            ) : (
-              <>
-                <video ref={videoRef} className="w-full aspect-video rounded-md" autoPlay muted />
-                <canvas ref={canvasRef} className="hidden" />
-                { !(hasCameraPermission) && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Image Section */}
+            <div className="flex flex-col items-center space-y-2">
+              {imageUrl ? (
+                <Image src={imageUrl} alt="Uploaded Food" width={300} height={300} className="rounded-md shadow-md object-cover" />
+              ) : (
+                <>
+                  <video ref={videoRef} className="w-full aspect-video rounded-md" autoPlay muted />
+                  <canvas ref={canvasRef} className="hidden" />
+                  { !(hasCameraPermission) && (
                     <Alert variant="destructive">
                       <AlertTitle>Camera Access Required</AlertTitle>
                       <AlertDescription>
                         Please allow camera access to use this feature.
                       </AlertDescription>
                     </Alert>
-                )
-                }
+                  )
+                  }
+                </>
+              )}
+              <form onSubmit={handleSubmit} className="flex flex-col items-center space-y-2">
+                <Input
+                  type="file"
+                  id="photoUrl"
+                  name="photoUrl"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                />
+                <label htmlFor="photoUrl">
+                  <Button asChild variant="secondary">
+                    <span className="flex items-center">
+                      <UploadIcon className="h-4 w-4 mr-2" />
+                      {imageUrl ? 'Change Image' : 'Upload Image'}
+                    </span>
+                  </Button>
+                </label>
 
-              </>
-            )}
-            <form onSubmit={handleSubmit}>
-              <Input
-                type="file"
-                id="photoUrl"
-                name="photoUrl"
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="hidden"
-              />
-              <label htmlFor="photoUrl">
-                <Button asChild variant="secondary">
-                  <span className="flex items-center">
-                    <UploadIcon className="h-4 w-4 mr-2" />
-                    {imageUrl ? 'Change Image' : 'Upload Image'}
-                  </span>
-                </Button>
-              </label>
-
-              {hasCameraPermission && !imageUrl && (
+                {hasCameraPermission && !imageUrl && (
                   <Button type="button" variant="secondary" onClick={takeSnapshot}>
                     <CameraIcon className="h-4 w-4 mr-2" />
                     Take Photo
                   </Button>
-              )}
-              <Button
-                type="submit"
-                className=""
-                disabled={!imageUrl}
-              >
-                Get Cooking Instructions
-              </Button>
-            </form>
-          </div>
-
-          {cookingInfo && cookingInfo.foodName && (
-            <div className="mt-6">
-              <h2 className="text-lg font-semibold">Cooking Instructions</h2>
-              <p>Food Name: {cookingInfo.foodName}</p>
-              <p>Cooking Time: {cookingInfo.cookingTime}</p>
-              <p>Temperature: {cookingInfo.cookingTemperatureCelsius} °C</p>
+                )}
+                <Button
+                  type="submit"
+                  className="bg-primary text-primary-foreground hover:bg-primary/80 rounded-md px-4 py-2 font-medium"
+                  disabled={!imageUrl}
+                >
+                  Get Cooking Instructions
+                </Button>
+              </form>
             </div>
-          )}
+
+            {/* Cooking Instructions Section */}
+            {cookingInfo && cookingInfo.foodName ? (
+              <div className="mt-6 md:mt-0">
+                <h2 className="text-lg font-semibold text-foreground">Cooking Instructions</h2>
+                <div className="space-y-2">
+                  <p className="text-foreground"><span className="font-semibold">Food Name:</span> {cookingInfo.foodName}</p>
+                  <p className="text-foreground"><span className="font-semibold">Cooking Time:</span> {cookingInfo.cookingTime}</p>
+                  <p className="text-foreground"><span className="font-semibold">Temperature:</span> {cookingInfo.cookingTemperatureCelsius} °C</p>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-6 md:mt-0 flex items-center justify-center">
+                {imageUrl && !cookingInfo?.foodName && (
+                  <p className="text-muted-foreground">Getting cooking instructions...</p>
+                )}
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
     </div>

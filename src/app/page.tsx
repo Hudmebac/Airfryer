@@ -1,4 +1,3 @@
-
 'use client';
 
 import {IdentifyFoodOutput, identifyFood} from '@/ai/flows/identify-food';
@@ -124,7 +123,7 @@ export default function Home() {
       <Card className="w-full max-w-3xl space-y-4 p-4 rounded-lg shadow-md">
         <CardHeader>
           <CardTitle className="text-2xl font-semibold text-foreground">Air Fryer Temp</CardTitle>
-          <CardDescription className="text-muted-foreground">Upload a photo to get cooking instructions</CardDescription>
+          <CardDescription className="text-muted-foreground">Take Photo or upload image</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -204,3 +203,4 @@ export default function Home() {
     </div>
   );
 }
+

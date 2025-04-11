@@ -7,7 +7,7 @@ import {Input} from '@/components/ui/input';
 import {toast} from '@/hooks/use-toast';
 import {CameraIcon, UploadIcon} from 'lucide-react';
 import Image from 'next/image';
-import {useRef, useState, useEffect} from 'react';
+import {useRef, useState, useEffect, useCallback} from 'react';
 import {useActionState} from 'react';
 import {generateCookingInstructions} from '@/ai/flows/generate-cooking-instructions';
 import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
@@ -42,9 +42,12 @@ export default function Home() {
   const [hasCameraPermission, setHasCameraPermission] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
+
   useEffect(() => {
     if (state && state.foodName) {
       setCookingInfo(state);
+    } else {
+      setCookingInfo(null);
     }
   }, [state]);
 
@@ -72,19 +75,20 @@ export default function Home() {
     getCameraPermission();
   }, []);
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
 
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setImageUrl(reader.result as string);
+        const result = reader.result as string;
+        setImageUrl(result);
       };
       reader.readAsDataURL(file);
     }
-  };
+  }, []);
 
-  const takeSnapshot = () => {
+  const takeSnapshot = useCallback(() => {
     if (videoRef.current && canvasRef.current) {
       const video = videoRef.current;
       const canvas = canvasRef.current;
@@ -98,7 +102,22 @@ export default function Home() {
       const dataUrl = canvas.toDataURL('image/png');
       setImageUrl(dataUrl);
     }
-  };
+  }, []);
+
+
+  const handleSubmit = useCallback(async (e: React.SyntheticEvent) => {
+    e.preventDefault();
+    if (imageUrl) {
+      const formData = new FormData();
+      formData.append('photoUrl', imageUrl);
+      formAction(formData);
+    } else {
+      toast({
+        title: 'Info',
+        description: 'Please upload a photo of the food.',
+      });
+    }
+  }, [imageUrl, formAction]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen py-2">
@@ -127,7 +146,7 @@ export default function Home() {
 
               </>
             )}
-            <form action={formAction}>
+            <form onSubmit={handleSubmit}>
               <Input
                 type="file"
                 id="photoUrl"
@@ -155,14 +174,7 @@ export default function Home() {
                 type="submit"
                 className="w-full"
                 disabled={!imageUrl}
-                onClick={() => {
-                  if (!imageUrl) {
-                    toast({
-                      title: 'Info',
-                      description: 'Please upload a photo of the food.',
-                    });
-                  }
-                }}>
+              >
                 Get Cooking Instructions
               </Button>
             </form>
@@ -181,3 +193,4 @@ export default function Home() {
     </div>
   );
 }
+
